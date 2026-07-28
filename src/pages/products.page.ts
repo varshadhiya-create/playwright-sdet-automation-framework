@@ -1,6 +1,7 @@
 import { Locator, Page, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 import { NavigationComponent } from '../components/navigation.component';
+import { withAdRecovery } from '../utils/ad-overlay-handler';
 
 export class ProductsPage extends BasePage {
   readonly nav: NavigationComponent;
@@ -27,8 +28,10 @@ constructor(page: Page) {
 }
 
 async open(): Promise<void> {
-  await this.nav.goToProducts();
-  await expect(this.page.getByRole('heading', { name: 'All Products' })).toBeVisible();
+  await withAdRecovery(this.page, async () => {
+    await this.nav.goToProducts();
+    await expect(this.page.getByRole('heading', { name: 'All Products' })).toBeVisible({ timeout: 6000 });
+  });
 }
 
 async searchProduct(term: string): Promise<void> {
@@ -46,19 +49,23 @@ async getVisibleProductNames(): Promise<string[]> {
 }
 
 async addFirstProductToCart(): Promise<void> {
-  const firstProduct = this.productCards.first();
-  await firstProduct.hover();
-  await firstProduct.getByText('Add to cart').first().click();
-  await expect(this.page.getByText('Added!')).toBeVisible();
+  await withAdRecovery(this.page, async () => {
+    const firstProduct = this.productCards.first();
+    await firstProduct.hover();
+    await firstProduct.getByText('Add to cart').first().click();
+    await expect(this.page.getByText('Added!')).toBeVisible({ timeout: 6000 });
+  });
 }
 
 async addProductToCartByName(productName: string): Promise<void> {
-  const card = this.page
-  .locator('.product-image-wrapper')
-  .filter({ has: this.page.getByText(productName, { exact: true }) });
-  await card.hover();
-  await card.getByText('Add to cart').first().click();
-  await expect(this.page.getByText('Added!')).toBeVisible();
+  await withAdRecovery(this.page, async () => {
+    const card = this.page
+    .locator('.product-image-wrapper')
+    .filter({ has: this.page.getByText(productName, { exact: true }) });
+    await card.hover();
+    await card.getByText('Add to cart').first().click();
+    await expect(this.page.getByText('Added!')).toBeVisible({ timeout: 6000 });
+  });
 }
 
 async continueShopping(): Promise<void> {
@@ -66,17 +73,22 @@ async continueShopping(): Promise<void> {
 }
 
 async viewCart(): Promise<void> {
-  await this.page.getByRole('link', { name: 'View Cart' }).click();
+  await withAdRecovery(this.page, async () => {
+    await this.page.getByRole('link', { name: 'View Cart' }).click();
+    await expect(this.page.locator('#cart_info')).toBeVisible({ timeout: 6000 });
+  });
 }
 
 /** Navigates from the catalog grid to a single product's detail page. */
 async viewProductDetails(productName: string): Promise<void> {
-  const card = this.page
-  .locator('.product-image-wrapper')
-  .filter({ has: this.page.getByText(productName, { exact: true }) });
-  await card.hover();
-  await card.getByRole('link', { name: 'View Product' }).first().click();
-  await expect(this.page.getByRole('heading', { level: 2 })).toBeVisible();
+  await withAdRecovery(this.page, async () => {
+    const card = this.page
+    .locator('.product-image-wrapper')
+    .filter({ has: this.page.getByText(productName, { exact: true }) });
+    await card.hover();
+    await card.getByRole('link', { name: 'View Product' }).first().click();
+    await expect(this.page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 6000 });
+  });
 }
 
 async expectProductVisible(name: string): Promise<void> {
@@ -88,12 +100,14 @@ async expectNoResultsOrEmptyState(): Promise<void> {
 }
 
 async filterByCategory(topLevel: 'Women' | 'Men' | 'Kids', subCategory: string): Promise<void> {
-  await this.categoryPanel.getByRole('link', { name: topLevel, exact: true }).click();
-  await this.page
-  .locator(`#${topLevel}`)
-  .getByRole('link', { name: subCategory })
-  .click();
-  await expect(this.filterResultsHeading).toBeVisible();
+  await withAdRecovery(this.page, async () => {
+    await this.categoryPanel.getByRole('link', { name: topLevel, exact: true }).click({ timeout: 6000 });
+    await this.page
+    .locator(`#${topLevel}`)
+    .getByRole('link', { name: subCategory })
+    .click({ timeout: 6000 });
+    await expect(this.filterResultsHeading).toBeVisible({ timeout: 6000 });
+  });
 }
 
 async filterByBrand(brandName: string): Promise<void> {
