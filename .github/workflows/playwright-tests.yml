@@ -146,6 +146,7 @@ jobs:
       - name: Run Playwright tests
         env:
           GREP: ${{ needs.resolve-inputs.outputs.grep }}
+          HEADLESS: 'false'
         run: |
           sudo apt-get update -qq && sudo apt-get install -y xvfb
           if [ -n "$GREP" ]; then
