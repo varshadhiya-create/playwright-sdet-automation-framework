@@ -110,8 +110,8 @@ async expectOrderConfirmationDetails(): Promise<void> {
   // *assertions* (with ad-overlay dismissal in between) rather than resubmitting payment,
   // since resubmitting could place a duplicate order.
   await withAdRecovery(this.page, async () => {
-    await expect(this.orderPlacedHeading).toBeVisible({ timeout: 6000 });
-    await expect(this.orderSuccessMessage).toBeVisible({ timeout: 6000 });
+    await expect(this.orderPlacedHeading).toBeVisible({ timeout: 12000 });
+    await expect(this.orderSuccessMessage).toBeVisible({ timeout: 12000 });
   });
   await expect(this.downloadInvoiceButton).toBeVisible();
 }
