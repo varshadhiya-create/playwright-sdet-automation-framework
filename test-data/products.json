@@ -1,0 +1,11 @@
+{
+  "description": "Reference search terms and expected-category mappings used by product search tests.",
+  "knownSearchTerms": ["Dress", "Tshirt", "Jeans", "Top", "Saree", "Shirt"],
+  "invalidSearchTerms": ["zzzzznotarealproduct9999", "", "   ", "<script>alert(1)</script>"],
+  "expectedCategories": [
+    { "usertype": "Women", "category": "Dress" },
+    { "usertype": "Women", "category": "Tops" },
+    { "usertype": "Men", "category": "Tshirts" },
+    { "usertype": "Kids", "category": "Tops & Shirts" }
+  ]
+}

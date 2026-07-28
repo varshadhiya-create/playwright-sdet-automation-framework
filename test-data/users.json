@@ -1,0 +1,29 @@
+{
+  "description": "Static fixture data for scenarios that need deterministic (non-random) users, e.g. documentation examples or manual exploratory runs. Dynamic tests should prefer TestDataGenerator.randomUser() to avoid collisions.",
+  "boundaryUsers": [
+    {
+      "case": "minimumValidPassword",
+      "name": "Boundary Case",
+      "email": "boundary.min.pwd@mailinator.com",
+      "password": "Ab1!"
+    },
+    {
+      "case": "maximumRealisticNameLength",
+      "name": "Alexandria Christopherson-Fitzgerald-Montgomery",
+      "email": "boundary.long.name@mailinator.com",
+      "password": "ValidPass123!"
+    }
+  ],
+  "invalidUsers": [
+    {
+      "case": "malformedEmail",
+      "email": "not-an-email",
+      "password": "ValidPass123!"
+    },
+    {
+      "case": "emptyPassword",
+      "email": "valid.email@mailinator.com",
+      "password": ""
+    }
+  ]
+}
