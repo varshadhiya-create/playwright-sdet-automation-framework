@@ -23,14 +23,16 @@ export async function dismissAdOverlayIfPresent(page: Page): Promise<boolean> {
 
 /**
 * Runs `action` and, if it throws (typically a Playwright timeout because the ad overlay
-* swallowed a click or is covering the target element), dismisses the overlay and retries
-* the whole action. Retried actions must be safe to repeat -- callers should only wrap
-* idempotent navigation/assertion sequences, not one-shot form submissions.
+* swallowed a click, is covering the target element, or the live demo site is simply slow
+* to respond), dismisses any overlay and retries the whole action. Two attempts total keeps
+* the worst case bounded within the per-test timeout budget. Retried actions must be safe
+* to repeat -- callers should only wrap idempotent navigation/assertion sequences, not
+* one-shot form submissions.
 */
 export async function withAdRecovery<T>(
     page: Page,
     action: () => Promise<T>,
-    attempts = 3
+    attempts = 2
     ): Promise<T> {
     let lastError: unknown;
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
