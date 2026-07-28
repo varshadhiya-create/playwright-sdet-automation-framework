@@ -2,7 +2,7 @@ import { Locator, Page, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 import { NavigationComponent } from '../components/navigation.component';
 import { User } from '../types/application-types';
-import { dismissAdOverlayIfPresent } from '../utils/ad-overlay-handler';
+import { dismissAdOverlayIfPresent, withAdRecovery } from '../utils/ad-overlay-handler';
 
 export class LoginPage extends BasePage {
   readonly nav: NavigationComponent;
@@ -65,7 +65,11 @@ async expectLoggedIn(userName: string): Promise<void> {
 
 /** Fills the multi-step account creation form after "startSignup" redirects here. */
 async completeAccountInformation(user: User): Promise<void> {
-  await this.page.getByText('Enter Account Information').waitFor();
+  // The ad interstitial can appear during this transition and swallow the redirect,
+  // so this wait -- unlike the form fields below -- is retried with overlay recovery.
+  await withAdRecovery(this.page, () =>
+    this.page.getByText('Enter Account Information').waitFor({ timeout: 6000 })
+                       );
 
   const titleId = user.title === 'Mrs' ? '#id_gender2' : '#id_gender1';
   await this.page.locator(titleId).check();
