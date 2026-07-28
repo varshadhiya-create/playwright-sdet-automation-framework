@@ -56,3 +56,32 @@ export interface CartItem {
   quantity: number;
   total: string;
 }
+
+/** Shape of test-data/users.json — static, reviewable boundary/invalid-input fixtures. */
+export interface StaticUsersData {
+  description: string;
+  boundaryUsers: Array<{ case: string; name: string; email: string; password: string }>;
+  invalidUsers: Array<{ case: string; email: string; password: string }>;
+}
+
+/** Shape of test-data/products.json. */
+export interface StaticProductsData {
+  description: string;
+  knownSearchTerms: string[];
+  invalidSearchTerms: string[];
+  expectedCategories: Array<{ usertype: string; category: string }>;
+}
+
+/** Shape of test-data/cart.json. */
+export interface StaticCartData {
+  description: string;
+  validQuantities: number[];
+  boundaryQuantities: Array<{ case: string; value: number }>;
+  invalidQuantities: Array<{ case: string; value: number | string }>;
+}
+
+export interface StaticTestData {
+  users: StaticUsersData;
+  products: StaticProductsData;
+  cart: StaticCartData;
+}

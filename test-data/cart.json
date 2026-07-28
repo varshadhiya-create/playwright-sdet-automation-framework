@@ -1,0 +1,13 @@
+{
+  "description": "Quantity boundary/invalid fixtures for cart add/update scenarios.",
+  "validQuantities": [1, 2, 5, 10],
+  "boundaryQuantities": [
+    { "case": "minimum", "value": 1 },
+    { "case": "largeButRealistic", "value": 25 }
+  ],
+  "invalidQuantities": [
+    { "case": "zero", "value": 0 },
+    { "case": "negative", "value": -1 },
+    { "case": "nonNumeric", "value": "abc" }
+  ]
+}

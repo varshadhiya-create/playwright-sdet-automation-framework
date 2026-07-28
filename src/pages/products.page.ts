@@ -9,6 +9,9 @@ export class ProductsPage extends BasePage {
   private readonly searchButton: Locator;
   private readonly productCards: Locator;
   private readonly searchedProductsHeading: Locator;
+  private readonly categoryPanel: Locator;
+  private readonly brandPanel: Locator;
+  private readonly filterResultsHeading: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -18,6 +21,11 @@ export class ProductsPage extends BasePage {
     this.searchButton = page.locator('#submit_search');
     this.productCards = page.locator('.product-image-wrapper');
     this.searchedProductsHeading = page.getByText('Searched Products');
+    this.categoryPanel = page.locator('.left-sidebar .panel-group').first();
+    this.brandPanel = page.locator('.brands_products');
+    // Both search and category/brand filtering land on a heading of this shape
+    // ("Searched Products" / "Women - Dress Products" / "Brand - Polo Products").
+    this.filterResultsHeading = page.locator('.features_items h2.title');
   }
 
   async open(): Promise<void> {
@@ -35,10 +43,23 @@ export class ProductsPage extends BasePage {
     return this.productCards.count();
   }
 
+  async getVisibleProductNames(): Promise<string[]> {
+    return this.page.locator('.product-image-wrapper .productinfo p').allTextContents();
+  }
+
   async addFirstProductToCart(): Promise<void> {
     const firstProduct = this.productCards.first();
     await firstProduct.hover();
     await firstProduct.getByText('Add to cart').click();
+    await expect(this.page.getByText('Added!')).toBeVisible();
+  }
+
+  async addProductToCartByName(productName: string): Promise<void> {
+    const card = this.page
+      .locator('.product-image-wrapper')
+      .filter({ has: this.page.getByText(productName, { exact: true }) });
+    await card.hover();
+    await card.getByText('Add to cart').click();
     await expect(this.page.getByText('Added!')).toBeVisible();
   }
 
@@ -50,6 +71,16 @@ export class ProductsPage extends BasePage {
     await this.page.getByRole('link', { name: 'View Cart' }).click();
   }
 
+  /** Navigates from the catalog grid to a single product's detail page. */
+  async viewProductDetails(productName: string): Promise<void> {
+    const card = this.page
+      .locator('.product-image-wrapper')
+      .filter({ has: this.page.getByText(productName, { exact: true }) });
+    await card.hover();
+    await card.getByRole('link', { name: 'View Product' }).click();
+    await expect(this.page.getByRole('heading', { level: 2 })).toBeVisible();
+  }
+
   async expectProductVisible(name: string): Promise<void> {
     await expect(this.page.getByText(name).first()).toBeVisible();
   }
@@ -57,5 +88,29 @@ export class ProductsPage extends BasePage {
   async expectNoResultsOrEmptyState(): Promise<void> {
     // Boundary case: searching a nonsense term should not error, just show zero results.
     expect(await this.getVisibleProductCount()).toBe(0);
+  }
+
+  // --- Filtering (left sidebar CATEGORY / BRANDS panels) ---
+
+  /**
+   * The category sidebar is an accordion: clicking the top-level category (Women/Men/Kids)
+   * expands it, then a subcategory link (Dress, Tshirts, ...) applies the filter.
+   */
+  async filterByCategory(topLevel: 'Women' | 'Men' | 'Kids', subCategory: string): Promise<void> {
+    await this.categoryPanel.getByRole('link', { name: topLevel, exact: true }).click();
+    await this.page
+      .locator(`#${topLevel}`)
+      .getByRole('link', { name: subCategory })
+      .click();
+    await expect(this.filterResultsHeading).toBeVisible();
+  }
+
+  async filterByBrand(brandName: string): Promise<void> {
+    await this.brandPanel.getByRole('link', { name: brandName, exact: true }).click();
+    await expect(this.filterResultsHeading).toBeVisible();
+  }
+
+  async getFilterResultsHeadingText(): Promise<string> {
+    return (await this.filterResultsHeading.textContent())?.trim() ?? '';
   }
 }

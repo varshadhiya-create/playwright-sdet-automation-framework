@@ -17,6 +17,11 @@ export class CheckoutPage extends BasePage {
   private readonly expiryYearInput: Locator;
   private readonly payAndConfirmButton: Locator;
   private readonly orderSuccessMessage: Locator;
+  private readonly addressDeliverySection: Locator;
+  private readonly reviewOrderHeading: Locator;
+  private readonly orderPlacedHeading: Locator;
+  private readonly downloadInvoiceButton: Locator;
+  private readonly continueButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -31,6 +36,11 @@ export class CheckoutPage extends BasePage {
     this.expiryYearInput = page.locator('[data-qa="expiry-year"]');
     this.payAndConfirmButton = page.locator('[data-qa="pay-button"]');
     this.orderSuccessMessage = page.getByText('Your order has been placed successfully!');
+    this.addressDeliverySection = page.locator('#address_delivery');
+    this.reviewOrderHeading = page.getByText('Review Your Order');
+    this.orderPlacedHeading = page.getByRole('heading', { name: 'Order Placed!' });
+    this.downloadInvoiceButton = page.getByRole('link', { name: 'Download Invoice' });
+    this.continueButton = page.getByRole('link', { name: 'Continue' });
   }
 
   async cartItemCount(): Promise<number> {
@@ -66,5 +76,41 @@ export class CheckoutPage extends BasePage {
 
   async expectOrderPlacedSuccessfully(): Promise<void> {
     await expect(this.orderSuccessMessage).toBeVisible();
+  }
+
+  // --- Checkout validation ---
+
+  async expectReviewOrderVisible(): Promise<void> {
+    await expect(this.reviewOrderHeading).toBeVisible();
+  }
+
+  async expectDeliveryAddressContains(text: string): Promise<void> {
+    await expect(this.addressDeliverySection).toContainText(text);
+  }
+
+  /**
+   * Submits the payment form with every field left blank. The fields carry the `required`
+   * HTML attribute, so the browser blocks submission natively — no custom JS assertion
+   * needed, and no hard-coded wait: we assert on the page simply never navigating away.
+   */
+  async attemptPaymentWithEmptyFields(): Promise<void> {
+    await this.payAndConfirmButton.click();
+  }
+
+  async expectStillOnPaymentPage(): Promise<void> {
+    await expect(this.nameOnCardInput).toBeVisible();
+    await expect(this.orderSuccessMessage).not.toBeVisible();
+  }
+
+  // --- Order confirmation ---
+
+  async expectOrderConfirmationDetails(): Promise<void> {
+    await expect(this.orderPlacedHeading).toBeVisible();
+    await expect(this.orderSuccessMessage).toBeVisible();
+    await expect(this.downloadInvoiceButton).toBeVisible();
+  }
+
+  async continueAfterOrderConfirmation(): Promise<void> {
+    await this.continueButton.click();
   }
 }

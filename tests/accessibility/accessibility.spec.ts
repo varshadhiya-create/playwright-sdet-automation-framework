@@ -6,7 +6,7 @@ import { test, expect } from '../../src/fixtures/test-fixtures';
  * (missing labels, contrast, landmark structure) but don't replace manual/assistive-tech
  * review. Scoped to wcag2a/wcag2aa tags to match common organizational compliance targets.
  */
-test.describe('Accessibility @regression', () => {
+test.describe('Accessibility', { tag: ['@ui', '@regression'] }, () => {
   test('home page has no critical WCAG 2.1 A/AA violations', async ({ page }) => {
     await page.goto('/');
 
