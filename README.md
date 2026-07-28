@@ -363,5 +363,5 @@ Approximately 14 years of IT experience in software quality engineering, special
 
 **Skills:** Playwright, TypeScript, Java, API Testing, UI Automation, CI/CD, Test Framework Design
 
-- LinkedIn: [linkedin.com/in/your-profile](#)
-- GitHub: [github.com/your-username](#)
+- LinkedIn: linkedin.com/in/your-profile(#)
+- GitHub: www.linkedin.com/in/varsha-agraharam-a8b82412b(#)
