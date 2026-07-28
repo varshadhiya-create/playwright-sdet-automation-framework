@@ -1,0 +1,190 @@
+name: Playwright Tests
+
+# Single, consolidated pipeline. Push/PR trigger a fast @smoke run automatically; a nightly
+# schedule runs the full @regression suite across all browsers; workflow_dispatch exposes
+# environment/browser/suite as manual inputs for on-demand runs (e.g. "run @api only against
+# staging on webkit"). See .github/workflows/regression.yml for the (now superseded) notes on
+# why this replaced a two-file smoke/regression split.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Nightly full regression at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: false
+        default: 'qa'
+        type: choice
+        options: [qa, staging]
+      browser:
+        description: 'Browser to run'
+        required: false
+        default: 'chromium'
+        type: choice
+        options: [chromium, firefox, webkit, all]
+      suite:
+        description: 'Test suite to execute'
+        required: false
+        default: 'smoke'
+        type: choice
+        options: [smoke, regression, ui, api, all]
+
+jobs:
+  # Single source of truth for "what should this run do", so the test job's matrix and test
+  # command stay declarative instead of full of nested ${{ }} conditionals per step.
+  resolve-inputs:
+    name: Resolve run configuration
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+      grep: ${{ steps.resolve.outputs.grep }}
+      suite: ${{ steps.resolve.outputs.suite }}
+      browsers: ${{ steps.resolve.outputs.browsers }}
+      retention_days: ${{ steps.resolve.outputs.retention_days }}
+    steps:
+      - id: resolve
+        run: |
+          EVENT="${{ github.event_name }}"
+          SUITE_INPUT="${{ github.event.inputs.suite }}"
+          BROWSER_INPUT="${{ github.event.inputs.browser }}"
+          ENV_INPUT="${{ github.event.inputs.environment }}"
+
+          # Defaults per trigger type: push/PR stay fast (single-browser smoke), the nightly
+          # schedule always runs the full cross-browser regression suite, and manual dispatch
+          # uses whatever the operator selected.
+          if [ "$EVENT" == "schedule" ]; then
+            SUITE="regression"; BROWSER="all"; ENVIRONMENT="qa"; RETENTION=30
+          elif [ "$EVENT" == "workflow_dispatch" ]; then
+            SUITE="${SUITE_INPUT:-smoke}"; BROWSER="${BROWSER_INPUT:-chromium}"; ENVIRONMENT="${ENV_INPUT:-qa}"; RETENTION=14
+          else
+            SUITE="smoke"; BROWSER="chromium"; ENVIRONMENT="qa"; RETENTION=7
+          fi
+
+          case "$SUITE" in
+            smoke) GREP="@smoke" ;;
+            regression) GREP="@regression" ;;
+            ui) GREP="@ui" ;;
+            api) GREP="@api" ;;
+            all) GREP="" ;;
+            *) GREP="@smoke" ;;
+          esac
+
+          if [ "$BROWSER" == "all" ]; then
+            BROWSERS='["chromium","firefox","webkit"]'
+          else
+            BROWSERS="[\"$BROWSER\"]"
+          fi
+
+          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          echo "grep=$GREP" >> "$GITHUB_OUTPUT"
+          echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
+          echo "browsers=$BROWSERS" >> "$GITHUB_OUTPUT"
+          echo "retention_days=$RETENTION" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test (${{ matrix.project }}) — ${{ needs.resolve-inputs.outputs.suite }} / ${{ needs.resolve-inputs.outputs.environment }}
+    needs: resolve-inputs
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.resolve-inputs.outputs.browsers) }}
+    env:
+      ENV: ${{ needs.resolve-inputs.outputs.environment }}
+      CI: 'true'
+      # CI-specific retries absorb transient network flake against the live public demo app
+      # without masking real regressions (a retried-but-passing test still shows as flaky).
+      RETRIES: '2'
+      # Configurable without editing the workflow: set a repo/organization variable named
+      # PLAYWRIGHT_WORKERS to tune parallelism for the runner size in use; defaults to 2,
+      # a safe value for GitHub-hosted 2-core runners.
+      WORKERS: ${{ vars.PLAYWRIGHT_WORKERS || '2' }}
+      ALLURE_RESULTS_DIR: allure-results
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Set up the correct Node.js version
+      # 3. Cache npm dependencies — actions/setup-node's built-in npm cache, keyed on
+      #    package-lock.json, avoids re-downloading the dependency tree on every run.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 4. Install dependencies using npm ci (reproducible, respects the lockfile exactly)
+      - name: Install dependencies
+        run: npm ci
+
+      # 5. Install Playwright browsers and required system dependencies, scoped to the
+      #    browser(s) this matrix leg actually needs.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.project }}
+
+      # 6. Run ESLint
+      - name: Lint
+        run: npm run lint
+
+      # 7. Run TypeScript validation
+      - name: Type check
+        run: npm run typecheck
+
+      # 8. Execute the selected Playwright tests. The HTML reporter (step 9) writes its
+      #    output as part of this same run — Playwright has no separate "generate HTML
+      #    report" command; the report is a byproduct of `playwright test` per the
+      #    `reporter` config in playwright.config.ts.
+      - name: Run Playwright tests
+        env:
+          GREP: ${{ needs.resolve-inputs.outputs.grep }}
+        run: |
+          if [ -n "$GREP" ]; then
+            npx playwright test --project=${{ matrix.project }} --grep "$GREP"
+          else
+            npx playwright test --project=${{ matrix.project }}
+          fi
+
+      # 10. Generate the Allure report from the raw results collected above. Allure, unlike
+      #     the HTML reporter, requires an explicit generate step to turn allure-results/
+      #     (raw JSON) into a browsable static report.
+      - name: Generate Allure report
+        if: always()
+        run: npm run report:allure:generate
+
+      # 11. Upload artifacts — always, even on failure, so a red run is debuggable without
+      #     re-running locally. Screenshots, videos, and traces are all written under
+      #     test-results/ by Playwright itself (per the `use.screenshot/video/trace` config),
+      #     so one artifact covers all three rather than uploading the same files three times
+      #     under different names.
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.project }}-${{ needs.resolve-inputs.outputs.suite }}
+          path: playwright-report/
+          retention-days: ${{ fromJson(needs.resolve-inputs.outputs.retention_days) }}
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ matrix.project }}-${{ needs.resolve-inputs.outputs.suite }}
+          path: allure-report/
+          retention-days: ${{ fromJson(needs.resolve-inputs.outputs.retention_days) }}
+
+      - name: Upload test results (screenshots, videos, traces)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.project }}-${{ needs.resolve-inputs.outputs.suite }}
+          path: test-results/
+          retention-days: ${{ fromJson(needs.resolve-inputs.outputs.retention_days) }}

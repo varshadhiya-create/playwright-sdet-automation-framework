@@ -1,0 +1,27 @@
+# DEPRECATED — consolidated into .github/workflows/playwright-tests.yml.
+#
+# This file originally implemented regression as a separate workflow from smoke. It has
+# been superseded by a single workflow (playwright-tests.yml) that covers push/PR (smoke),
+# a nightly schedule (regression, full browser matrix), and workflow_dispatch with
+# environment/browser/suite inputs — so smoke and regression no longer need separate files.
+#
+# Kept in the repository (rather than deleted) purely as a historical reference for the
+# two-workflow approach; it has no automatic triggers and will not run in CI. If your org
+# prefers physically separate workflow files over one parameterized file, this is a working
+# starting point — just restore the `schedule:` trigger and remove this notice.
+name: 'Playwright Regression Tests (deprecated — see playwright-tests.yml)'
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  deprecated-notice:
+    name: This workflow has been consolidated
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain consolidation
+        run: |
+          echo "This workflow is deprecated and intentionally does nothing."
+          echo "Regression coverage now runs from .github/workflows/playwright-tests.yml:"
+          echo "  - automatically, nightly, via its 'schedule' trigger"
+          echo "  - on demand, via workflow_dispatch with suite=regression"
