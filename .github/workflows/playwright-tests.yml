@@ -101,7 +101,7 @@ jobs:
       CI: 'true'
       # CI-specific retries absorb transient network flake against the live public demo app
       # without masking real regressions (a retried-but-passing test still shows as flaky).
-      RETRIES: '2'
+      RETRIES: '3'
       # Configurable without editing the workflow: set a repo/organization variable named
       # PLAYWRIGHT_WORKERS to tune parallelism for the runner size in use; defaults to 2,
       # a safe value for GitHub-hosted 2-core runners.
