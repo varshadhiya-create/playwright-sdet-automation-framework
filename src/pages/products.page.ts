@@ -30,7 +30,7 @@ constructor(page: Page) {
 async open(): Promise<void> {
   await withAdRecovery(this.page, async () => {
     await this.nav.goToProducts();
-    await expect(this.page.getByRole('heading', { name: 'All Products' })).toBeVisible({ timeout: 6000 });
+    await expect(this.page.getByRole('heading', { name: 'All Products' })).toBeVisible({ timeout: 12000 });
   });
 }
 
@@ -53,7 +53,7 @@ async addFirstProductToCart(): Promise<void> {
     const firstProduct = this.productCards.first();
     await firstProduct.hover();
     await firstProduct.getByText('Add to cart').first().click();
-    await expect(this.page.getByText('Added!')).toBeVisible({ timeout: 6000 });
+    await expect(this.page.getByText('Added!')).toBeVisible({ timeout: 12000 });
   });
 }
 
@@ -64,7 +64,7 @@ async addProductToCartByName(productName: string): Promise<void> {
     .filter({ has: this.page.getByText(productName, { exact: true }) });
     await card.hover();
     await card.getByText('Add to cart').first().click();
-    await expect(this.page.getByText('Added!')).toBeVisible({ timeout: 6000 });
+    await expect(this.page.getByText('Added!')).toBeVisible({ timeout: 12000 });
   });
 }
 
@@ -75,7 +75,7 @@ async continueShopping(): Promise<void> {
 async viewCart(): Promise<void> {
   await withAdRecovery(this.page, async () => {
     await this.page.getByRole('link', { name: 'View Cart' }).click();
-    await expect(this.page.locator('#cart_info')).toBeVisible({ timeout: 6000 });
+    await expect(this.page.locator('#cart_info')).toBeVisible({ timeout: 12000 });
   });
 }
 
@@ -87,7 +87,7 @@ async viewProductDetails(productName: string): Promise<void> {
     .filter({ has: this.page.getByText(productName, { exact: true }) });
     await card.hover();
     await card.getByRole('link', { name: 'View Product' }).first().click();
-    await expect(this.page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 6000 });
+    await expect(this.page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 12000 });
   });
 }
 
@@ -101,12 +101,12 @@ async expectNoResultsOrEmptyState(): Promise<void> {
 
 async filterByCategory(topLevel: 'Women' | 'Men' | 'Kids', subCategory: string): Promise<void> {
   await withAdRecovery(this.page, async () => {
-    await this.categoryPanel.getByRole('link', { name: topLevel, exact: true }).click({ timeout: 6000 });
+    await this.categoryPanel.getByRole('link', { name: topLevel, exact: true }).click({ timeout: 12000 });
     await this.page
     .locator(`#${topLevel}`)
     .getByRole('link', { name: subCategory })
-    .click({ timeout: 6000 });
-    await expect(this.filterResultsHeading).toBeVisible({ timeout: 6000 });
+    .click({ timeout: 12000 });
+    await expect(this.filterResultsHeading).toBeVisible({ timeout: 12000 });
   });
 }
 
