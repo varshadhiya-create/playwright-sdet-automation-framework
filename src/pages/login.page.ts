@@ -65,10 +65,10 @@ async expectLoggedIn(userName: string): Promise<void> {
 
 /** Fills the multi-step account creation form after "startSignup" redirects here. */
 async completeAccountInformation(user: User): Promise<void> {
-  // The ad interstitial can appear during this transition and swallow the redirect,
-  // so this wait -- unlike the form fields below -- is retried with overlay recovery.
+  // The ad interstitial (or a slow page load) can delay this transition, so this wait --
+  // unlike the form fields below -- is retried with overlay-dismiss recovery.
   await withAdRecovery(this.page, () =>
-    this.page.getByText('Enter Account Information').waitFor({ timeout: 6000 })
+    this.page.getByText('Enter Account Information').waitFor({ timeout: 12000 })
                        );
 
   const titleId = user.title === 'Mrs' ? '#id_gender2' : '#id_gender1';
