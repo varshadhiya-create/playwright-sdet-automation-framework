@@ -147,10 +147,11 @@ jobs:
         env:
           GREP: ${{ needs.resolve-inputs.outputs.grep }}
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y xvfb
           if [ -n "$GREP" ]; then
-            npx playwright test --project=${{ matrix.project }} --grep "$GREP"
+           xvfb-run --auto-servernum  npx playwright test --project=${{ matrix.project }} --grep "$GREP"
           else
-            npx playwright test --project=${{ matrix.project }}
+           xvfb-run --auto-servernum  npx playwright test --project=${{ matrix.project }}
           fi
 
       # 10. Generate the Allure report from the raw results collected above. Allure, unlike
