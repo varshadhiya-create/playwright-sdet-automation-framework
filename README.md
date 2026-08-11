@@ -356,12 +356,11 @@ The complete list (60+ automated scenarios, including documented skip/fixme case
 
 ## About the Author
 
-**Varsha Agraharam**
-Senior SDET | Quality Engineering | Test Automation
+Varsha Agraharam — SDET Lead | Quality Engineering | Test Automation
 
-Approximately 14 years of IT experience in software quality engineering, specializing in scalable test automation architecture, UI and API testing, and CI/CD-integrated quality pipelines.
+12+ years in software quality engineering across banking, payments and regulated financial services, specializing in scalable test automation architecture, UI and API testing, and CI/CD-integrated quality pipelines.
 
-**Skills:** Playwright, TypeScript, Java, API Testing, UI Automation, CI/CD, Test Framework Design
+Skills: Playwright, TypeScript, Python, Java, API Testing, UI Automation, CI/CD, Test Framework Design
 
-- LinkedIn: www.linkedin.com/in/varsha-agraharam-a8b82412b
-- GitHub: https://github.com/varshadhiya-create
+LinkedIn: www.linkedin.com/in/varsha-agraharam-sdet
+GitHub: https://github.com/varshadhiya-create
